@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME     = "idrooms-marketing-frontend"
+        CONTAINER_NAME = "idrooms-marketing-frontend"
+        HOST_PORT      = "3001"
+        CONTAINER_PORT = "3001"
+        REPO_URL       = "https://github.com/akmusic-mad/idrooms_hotel_marketing.git"
+        ENV_CRED_ID    = "marketing_env"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'production',
+                    url: "${REPO_URL}",
+                    credentialsId: 'github-private'
+            }
+        }
+
+        stage('Setup .env') {
+            steps {
+                withCredentials([file(credentialsId: "${ENV_CRED_ID}", variable: 'ENV_FILE')]) {
+                    sh '''
+                        chmod -R 777 $WORKSPACE
+                        cp "$ENV_FILE" .env
+                        echo ".env file copied successfully."
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    echo "🔨 Building Docker image"
+                    docker build -t ${IMAGE_NAME} .
+                '''
+            }
+        }
+
+        stage('Stop Previous Container') {
+            steps {
+                sh '''
+                    echo "🛑 Stopping old container (if exists)"
+                    docker rm -f ${CONTAINER_NAME} || true
+                '''
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                    echo "▶️ Running new container"
+                    docker run -d \
+                        --env-file .env \
+                        -p ${HOST_PORT}:${CONTAINER_PORT} \
+                        --name ${CONTAINER_NAME} \
+                        ${IMAGE_NAME}
+                '''
+            }
+        }
+
+        stage('Cleanup Old Images') {
+            steps {
+                sh '''
+                    echo "🧹 Cleaning unused images"
+                    docker image prune -f
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Marketing frontend deployed locally on port ${HOST_PORT}"
+        }
+        failure {
+            echo "❌ Deployment failed!"
+        }
+    }
+}

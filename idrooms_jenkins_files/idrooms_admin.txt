@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME     = "admin_idrooms"
+        CONTAINER_NAME = "admin_idrooms"
+        HOST_PORT      = "3003"
+        CONTAINER_PORT = "3003"
+
+        REPO_URL       = "https://github.com/akmusic-mad/Idrooms_hotel_admin.git"
+        ENV_CRED_ID    = "marketing_env"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'production_live',
+                    url: "${REPO_URL}",
+                    credentialsId: 'github-private'
+            }
+        }
+
+        stage('Setup .env') {
+            steps {
+                withCredentials([file(credentialsId: "${ENV_CRED_ID}", variable: 'ENV_FILE')]) {
+                    sh '''
+                        chmod -R 777 $WORKSPACE
+                        cp "$ENV_FILE" .env
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build -t ${IMAGE_NAME} .
+                '''
+            }
+        }
+
+        stage('Stop Previous Container') {
+            steps {
+                sh '''
+                    docker rm -f ${CONTAINER_NAME} || true
+                '''
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                    docker run -d \
+                    --env-file .env \
+                    -p ${HOST_PORT}:${CONTAINER_PORT} \
+                    --name ${CONTAINER_NAME} \
+                    ${IMAGE_NAME}
+                '''
+            }
+        }
+
+        stage('Cleanup Images') {
+            steps {
+                sh 'docker image prune -f'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Admin deployed locally on port ${HOST_PORT}"
+        }
+        failure {
+            echo "❌ Deployment failed"
+        }
+    }
+}

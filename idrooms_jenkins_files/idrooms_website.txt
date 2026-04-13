@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = "id-rooms"
+        CONTAINER_NAME = "id-rooms"
+        PORT = "3002"
+        REPO_URL = "https://github.com/akmusic-mad/id-rooms-frontend.git"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'production',
+                    url: "${REPO_URL}",
+                    credentialsId: 'github-private'
+            }
+        }
+
+        stage('Load .env File') {
+            steps {
+                withCredentials([file(credentialsId: 'marketing_env', variable: 'ENV_FILE')]) {
+                    sh '''
+                        cat "$ENV_FILE" > .env
+                        ls -la .env
+                    '''
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t ${IMAGE_NAME} .'
+            }
+        }
+
+        stage('Stop Previous Container') {
+            steps {
+                sh 'docker rm -f ${CONTAINER_NAME} || true'
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                sh '''
+                    docker run -d \
+                      --env-file .env \
+                      -p ${PORT}:${PORT} \
+                      --name ${CONTAINER_NAME} \
+                      ${IMAGE_NAME}
+                '''
+            }
+        }
+
+        stage('Cleanup Old Images') {
+            steps {
+                sh 'docker image prune -f'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment successful (default Jenkins workspace)"
+        }
+        failure {
+            echo "❌ Deployment failed"
+        }
+    }
+}
