@@ -89,7 +89,7 @@ Backend is deployed manually using Docker Compose.
 ## 📸 Screenshots
 
 ### Jenkins Pipeline
-![Jenkins Pipeline](screenshots/jenkins-pipeline-success.png)
+https://github.com/ChandanYadavKS/idrooms-devops-deployment/tree/main/screenshots/idrooms_jenkins_pipiline
 
 ---
 
