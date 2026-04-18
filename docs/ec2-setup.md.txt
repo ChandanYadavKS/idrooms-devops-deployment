@@ -1,0 +1,63 @@
+# EC2 Setup (IDRooms Production Server)
+
+## 🚀 Overview
+This document describes the setup of the AWS EC2 instance used to deploy the **IDRooms application** in production.
+
+The EC2 instance is configured to host:
+- Frontend (via Jenkins + Docker)
+- Backend (via Docker)
+- Nginx for domain routing
+
+---
+
+## 🖥️ Instance Details
+
+| Property            | Value |
+|--------------------|------|
+| Instance Name      | idrooms |
+| Instance ID        | i-020822c330dfd39c0 |
+| Instance Type      | t3.large |
+| AMI                | Ubuntu 24.04 LTS |
+| Region             | us-east-1 |
+| Public IP          | 107.22.92.44 |
+| Private IP         | 172.31.94.114 |
+| Public DNS         | ec2-107-22-92-44.compute-1.amazonaws.com |
+| Key Pair           | idroomsnew |
+| IAM Role           | ec2_s3_accessrole |
+
+---
+
+## 🔐 Security Group Configuration
+
+### Inbound Rules
+
+| Port | Purpose |
+|------|--------|
+| 22   | SSH access |
+| 80   | HTTP (Nginx) |
+| 443  | HTTPS (SSL) |
+| 8080 | Jenkins |
+| 8000 | Backend |
+| 3001 | Frontend services |
+| 3002 | Frontend services |
+| 3003 | Frontend services |
+| 3004 | Frontend services |
+| 3006 | Frontend services |
+
+> All ports are currently open to `0.0.0.0/0` for public access.
+
+---
+
+### Outbound Rules
+
+| Port | Purpose |
+|------|--------|
+| 3306 | MySQL (RDS access) |
+| All  | General outbound traffic |
+
+---
+
+## 🔗 Connecting to EC2
+
+```bash
+ssh -i idroomsnew.pem ubuntu@107.22.92.44

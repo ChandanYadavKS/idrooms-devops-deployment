@@ -1,0 +1,52 @@
+# Frontend Deployment (Jenkins + Docker + Nginx)
+
+## 🚀 Overview
+The frontend of the **IDRooms application** is deployed using a CI/CD pipeline built with **Jenkins and Docker**.
+
+Deployment flow:
+- code is pushed to GitHub  
+- Jenkins pipeline builds and deploys frontend  
+- Docker container runs the application  
+- domain is mapped using DNS  
+- Nginx is configured to expose the application  
+
+---
+
+## 🛠️ Tech Stack
+
+- Jenkins (CI/CD)
+- Docker (containerization)
+- AWS EC2 (hosting)
+- Nginx (reverse proxy)
+- DNS (domain mapping)
+
+---
+
+## ⚙️ Deployment Flow
+
+1. Developer pushes code to GitHub  
+2. Jenkins pipeline is triggered  
+3. Jenkins pulls latest frontend code  
+4. Docker image is built  
+5. Old container is stopped and removed  
+6. New container is started  
+7. Domain is mapped to EC2 IP via DNS  
+8. Nginx routes domain traffic to frontend container  
+
+---
+
+## 🐳 Dockerfile (Frontend)
+
+```dockerfile id="vxyq7r"
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY . .
+
+RUN npm install
+RUN npm run build
+
+RUN npm install -g serve
+
+CMD ["serve", "-s", "dist", "-l", "3000"]

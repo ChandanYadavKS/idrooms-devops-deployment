@@ -1,0 +1,91 @@
+# Jenkins Setup (IDRooms Deployment)
+
+## 🚀 Overview
+Jenkins is used in this project to automate the frontend deployment of the **IDRooms application** using CI/CD.
+
+It performs:
+- code pull from GitHub
+- Docker image build
+- container deployment
+- automated updates
+
+---
+
+## 🖥️ Server Details
+
+- **Server:** AWS EC2 (Ubuntu 24.04)
+- **Public IP:** 107.22.92.44
+- **Jenkins URL:** http://107.22.92.44:8080
+
+---
+
+## ⚙️ Jenkins Installation
+
+Jenkins was installed using an automation script.
+
+### Step 1: Create Script
+
+```bash
+vi jenkins.sh
+
+Paste the following:
+
+#!/bin/bash
+
+set -e
+
+sudo apt update -y
+sudo apt install -y curl gnupg fontconfig openjdk-21-jre maven
+
+sudo mkdir -p /etc/apt/keyrings
+
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key | \
+sudo tee /etc/apt/keyrings/jenkins-keyring.asc > /dev/null
+
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | \
+sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+sudo apt update -y
+sudo apt install -y jenkins
+
+sudo systemctl daemon-reexec
+sudo systemctl enable jenkins
+sudo systemctl start Jenkins
+
+
+Step 2: Run Script
+chmod +x jenkins.sh
+./jenkins.sh
+
+Initial Setup
+
+Get Admin Password
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+Open Jenkins
+http://ip of ec2:8080
+
+Install Plugins
+Git Plugin
+Pipeline Plugin
+Docker Pipeline Plugin
+
+
+ Jenkins Configuration
+Allow Jenkins to Use Docker
+
+sudo usermod -aG docker jenkins
+sudo systemctl restart Jenkins
+
+
+ Usage in Project
+
+Jenkins is used for:
+
+Pulling frontend code from GitHub
+Building Docker image
+Stopping old container
+Deploying new container
+
+ Verification
+sudo systemctl status Jenkins

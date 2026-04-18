@@ -1,0 +1,106 @@
+# Backend Deployment (Docker Compose on EC2)
+
+## 🚀 Overview
+The backend of the **IDRooms application** is deployed manually on AWS EC2 using **Docker and Docker Compose**.
+
+This setup includes:
+- pulling code from GitHub  
+- configuring environment variables  
+- adding required key files  
+- building Docker image  
+- running backend using Docker Compose  
+- exposing backend via domain using Nginx  
+
+---
+
+## ⚙️ Deployment Flow
+
+1. Connect to EC2 server  
+2. Pull backend code from GitHub  
+3. Create `.env` file for configuration  
+4. Add required key files (`public_key.pem`, `private_key.pem`)  
+5. Create Dockerfile  
+6. Create `docker-compose.yml`  
+7. Build and run containers using Docker Compose  
+8. Configure domain using Nginx  
+
+---
+
+## 📥 Step 1: Pull Backend Code
+
+```bash
+git clone your-backend-repo-url
+cd idrooms_backend
+
+🔐 Step 2: Configure Environment Variables
+
+Create .env file:
+
+nano .env
+
+Example:
+
+DEBUG=False
+SECRET_KEY=your-secret-key
+DB_NAME=your-db
+DB_USER=your-user
+DB_PASSWORD=your-password
+DB_HOST=your-db-host
+🔑 Step 3: Add Key Files
+
+Add the following files in project root:
+
+public_key.pem
+private_key.pem
+
+Used for:
+
+authentication
+secure communication
+🐳 Step 4: Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install -r requirements.txt
+
+CMD ["gunicorn", "app.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+🐳 Step 5: docker-compose.yml
+version: "3.8"
+
+services:
+  backend:
+    build: .
+    container_name: idrooms-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: always
+▶️ Step 6: Run Backend
+docker compose build
+docker compose up -d
+🧪 Step 7: Verify
+docker ps
+🌐 Step 8: Nginx Configuration
+
+Expose backend using domain:
+
+server {
+    listen 80;
+    server_name your-backend-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+Apply changes:
+
+sudo nginx -t
+sudo systemctl restart nginx
+
