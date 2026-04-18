@@ -1,0 +1,51 @@
+services:
+  backend:
+    build: .
+    container_name: idrooms-backend
+    command: >
+      gunicorn idrooms.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      --worker-class gevent
+      --timeout 120
+      --keep-alive 5
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery_worker:
+    build: .
+    container_name: idrooms-celery-worker
+    command: celery -A idrooms worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  celery_beat:
+    build: .
+    container_name: idrooms-celery-beat
+    command: celery -A idrooms beat -l info --schedule /tmp/celerybeat-schedule
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: idrooms-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
