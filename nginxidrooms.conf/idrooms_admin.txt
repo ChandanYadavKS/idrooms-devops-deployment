@@ -1,0 +1,30 @@
+# Stage 1: Build
+FROM node:20-alpine AS build
+ 
+# Set working directory
+WORKDIR /app
+ 
+# Copy package files and install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci
+ 
+# Copy project files and build
+COPY . .
+RUN npm run build
+ 
+# Stage 2: Production
+FROM node:20-alpine
+ 
+WORKDIR /app
+ 
+# Install 'serve' globally to serve the production build
+RUN npm install -g serve
+ 
+# Copy built files from build stage
+COPY --from=build /app/dist ./dist
+ 
+# Expose production port
+EXPOSE 3003
+ 
+# Serve the production build
+CMD ["serve", "-s", "dist", "-l", "3003"]
